@@ -1,4 +1,4 @@
-EmulationStation
+GAME-BOX
 ================
 
 EmulationStation is a cross-platform graphical front-end for emulators with controller navigation.
