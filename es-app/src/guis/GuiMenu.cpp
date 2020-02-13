@@ -32,7 +32,6 @@
 #include "InputManager.h"
 #include "AudioManager.h"
 #include <LibretroRatio.h>
-#include "GuiLoading.h"
 #include "guis/GuiAutoScrape.h"
 #include "guis/GuiUpdate.h"
 #include "guis/GuiInstallStart.h"
@@ -75,7 +74,7 @@ GuiMenu::GuiMenu(Window *window) : GuiComponent(window), mMenu(window, _("MAIN M
 	if (isFullUI &&
 		SystemConf::getInstance()->get("global.retroachievements") == "1" &&
 		SystemConf::getInstance()->get("global.retroachievements.username") != "")
-	        addEntry(_("RETROACHIEVEMENTS").c_str(), true, [this] { mWindow->pushGui(new GuiRetroAchievements(mWindow)); }, "iconRetroachievements");
+		addEntry(_("RETROACHIEVEMENTS").c_str(), true, [this] { GuiRetroAchievements::show(mWindow); }, "iconRetroachievements");
 
 	// GAMES SETTINGS
 	if (isFullUI)
@@ -2538,6 +2537,11 @@ void GuiMenu::openSoundSettings()
 	video_audio->setState(Settings::getInstance()->getBool("VideoAudio"));
 	s->addWithLabel(_("ENABLE VIDEO AUDIO"), video_audio);
 	s->addSaveFunc([video_audio] { Settings::getInstance()->setBool("VideoAudio", video_audio->getState()); });
+
+	auto videolowermusic = std::make_shared<SwitchComponent>(mWindow);
+	videolowermusic->setState(Settings::getInstance()->getBool("VideoLowersMusic"));
+	s->addWithLabel(_("LOWER MUSIC WHEN PLAYING VIDEO"), videolowermusic);
+	s->addSaveFunc([videolowermusic] { Settings::getInstance()->setBool("VideoLowersMusic", videolowermusic->getState()); });
 
 	mWindow->pushGui(s);
 }

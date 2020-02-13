@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include "Settings.h"
+#include <iomanip> 
 
 #if WIN32
 #include <Windows.h>
@@ -65,6 +66,9 @@ void Log::init()
 
 std::ostringstream& Log::get(LogLevel level)
 {
+	time_t t = time(nullptr);
+	os << std::put_time(localtime(&t), "%F %T\t");
+
 	switch (level)
 	{
 	case LogError:
