@@ -45,10 +45,20 @@
 #include "ThreadedBluetooth.h"
 #include "views/gamelist/IGameListView.h"
 #include "components/MultiLineMenuEntry.h"
+#include "components/BatteryIndicatorComponent.h"
 
 #define fake_gettext_fade _("fade")
 #define fake_gettext_slide _("slide")
 #define fake_gettext_instant _("instant")
+
+// batocera-info
+#define fake_gettext_system       _("System")
+#define fake_gettext_architecture _("Architecture")
+#define fake_gettext_temperature  _("Temperature")
+#define fake_gettext_battery      _("Battery")
+#define fake_gettext_cpu_model    _("Cpu model")
+#define fake_gettext_cpu_number   _("Cpu number")
+#define fake_gettext_cpu_feature  _("Cpu feature")
 
 GuiMenu::GuiMenu(Window *window) : GuiComponent(window), mMenu(window, _("MAIN MENU").c_str()), mVersion(window)
 {
@@ -650,14 +660,14 @@ void GuiMenu::openSystemInformations_batocera()
 			std::string vname = "";
 			for (unsigned int i = 1; i < tokens.size(); i++) {
 				if (i > 1) vname += " ";
-				vname += tokens.at(i);
+                                vname += tokens.at(i);
 			}
 
 			auto space = std::make_shared<TextComponent>(window,
-				vname,
+                               vname,
 				font,
 				color);
-			informationsGui->addWithLabel(tokens.at(0), space);
+			informationsGui->addWithLabel(_(tokens.at(0).c_str()), space);
 		}
 	}
 	
@@ -2562,13 +2572,22 @@ void GuiMenu::openUISettings()
 			s->setVariable("reloadAll", true);
 	});
 
+	// Battery indicator
+	if (mWindow->getBatteryIndicator() && mWindow->getBatteryIndicator()->hasBattery())
+	{
+		auto batteryStatus = std::make_shared<SwitchComponent>(mWindow);
+		batteryStatus->setState(Settings::getInstance()->getBool("ShowBatteryIndicator"));
+		s->addWithLabel(_("SHOW BATTERY STATUS"), batteryStatus);
+		s->addSaveFunc([batteryStatus] { Settings::getInstance()->setBool("ShowBatteryIndicator", batteryStatus->getState()); });
+	}
+
 	// Enable OSK (On-Screen-Keyboard)
 	auto osk_enable = std::make_shared<SwitchComponent>(mWindow);
 	osk_enable->setState(Settings::getInstance()->getBool("UseOSK"));
 	s->addWithLabel(_("ON SCREEN KEYBOARD"), osk_enable);
 	s->addSaveFunc([osk_enable] {
 		Settings::getInstance()->setBool("UseOSK", osk_enable->getState()); });
-		
+
 	// filenames
 	auto hidden_files = std::make_shared<SwitchComponent>(mWindow);
 	hidden_files->setState(Settings::getInstance()->getBool("ShowFilenames"));
@@ -3599,9 +3618,9 @@ std::vector<DecorationSetInfo> GuiMenu::getDecorationsSets(SystemData* system)
 				info.name = folder.substr(paths[i].size() + 1);
 				info.path = folder;
 
-				if (system != nullptr && info.name == "default")
+				if (system != nullptr && Utils::String::startsWith(info.name, "default"))
 				{
-					std::string systemImg = paths[i] + "/default/systems/" + system->getName() + ".png";
+					std::string systemImg = paths[i] + "/"+ info.name +"/systems/" + system->getName() + ".png";
 					if (Utils::FileSystem::exists(systemImg))
 						info.imageUrl = systemImg;
 				}

@@ -19,6 +19,7 @@
 #include <mutex>
 #include "components/AsyncNotificationComponent.h"
 #include "components/ControllerActivityComponent.h"
+#include "components/BatteryIndicatorComponent.h"
 #include "guis/GuiMsgBox.h"
 #include "components/VolumeInfoComponent.h"
 #ifdef _ENABLEEMUELEC
@@ -181,8 +182,13 @@ bool Window::init()
 	if (mControllerActivity == nullptr)
 		mControllerActivity = std::make_shared<ControllerActivityComponent>(this);
 
+	if (mBatteryIndicator == nullptr)
+		mBatteryIndicator = std::make_shared<BatteryIndicatorComponent>(this);
+	
 	if (mVolumeInfo == nullptr)
 		mVolumeInfo = std::make_shared<VolumeInfoComponent>(this);
+	else
+		mVolumeInfo->reset();
 
 	// update our help because font sizes probably changed
 	if (peekGui())
@@ -445,6 +451,9 @@ void Window::update(int deltaTime)
 	if (mControllerActivity)
 		mControllerActivity->update(deltaTime);
 
+	if (mBatteryIndicator)
+		mBatteryIndicator->update(deltaTime);
+
 	AudioManager::update(deltaTime);
 }
 
@@ -501,12 +510,15 @@ void Window::render()
 		mDefaultFonts.at(1)->renderTextCache(mFrameDataText.get());
 	}
 
-        // clock // batocera
+    // clock // batocera
 	if (Settings::getInstance()->getBool("DrawClock") && mClock && (mGuiStack.size() < 2 || !Renderer::isSmallScreen()))
 		mClock->render(transform);
 	
 	if (Settings::getInstance()->getBool("ShowControllerActivity") && mControllerActivity != nullptr && (mGuiStack.size() < 2 || !Renderer::isSmallScreen()))
 		mControllerActivity->render(transform);
+
+	if (mBatteryIndicator != nullptr && (mGuiStack.size() < 2 || !Renderer::isSmallScreen()))
+		mBatteryIndicator->render(transform);
 
 	Renderer::setMatrix(Transform4x4f::Identity());
 
@@ -526,7 +538,7 @@ void Window::render()
 	for (auto extra : mScreenExtras)
 		extra->render(transform);
 
-	if (mVolumeInfo)
+	if (mVolumeInfo && Settings::getInstance()->getBool("VolumePopup"))
 		mVolumeInfo->render(transform);
 
 	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
@@ -869,10 +881,10 @@ void Window::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 	}
 
 	if (mControllerActivity)
-	{
 		mControllerActivity->applyTheme(theme, "screen", "controllerActivity", ThemeFlags::ALL ^ (ThemeFlags::TEXT));
-	}
 
-
+	if (mBatteryIndicator)
+		mBatteryIndicator->applyTheme(theme, "screen", "batteryIndicator", ThemeFlags::ALL);
+	
 	mVolumeInfo = std::make_shared<VolumeInfoComponent>(this);
 }
